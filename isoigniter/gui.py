@@ -9,8 +9,13 @@ from PySide6.QtWidgets import (
     QMessageBox,
 )
 from PySide6.QtCore import Signal
-from isoigniter.utils import get_usb_devices
-from isoigniter.hybrid_iso_writer import UsbWriterThread  # Import the thread class
+from isoigniter.utils import get_usb_devices, has_mbr_signature
+from isoigniter.hybrid_iso_writer import (
+    UsbWriterThread,
+)  # Import hybrid iso writer thread
+from isoigniter.win_iso_writer import (
+    WinWriterThread,
+)  # Import the Windows writer thread
 
 
 class UsbWriterUI(QWidget):
@@ -69,11 +74,16 @@ class UsbWriterUI(QWidget):
             QMessageBox.warning(self, "Error", "No USB device selected.")
             return
 
+        is_hybrid = has_mbr_signature(self.iso_path)
+
         self.write_button.setEnabled(False)
         self.progress_bar.setValue(0)
 
         # **Start the writer thread**
-        self.writer_thread = UsbWriterThread(self.iso_path, usb_device)
+        if is_hybrid:
+            self.writer_thread = UsbWriterThread(self.iso_path, usb_device)
+        else:
+            self.writer_thread = WinWriterThread(self.iso_path, usb_device)
         self.writer_thread.progress.connect(
             self.progress_bar.setValue
         )  # Update progress bar
