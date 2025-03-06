@@ -11,10 +11,12 @@ class WinWriterThread(QThread):
         super().__init__()
         self.iso_path = iso_path
         self.usb_device = usb_device
+        self.uefi_ntfs_img_path = "uefi-ntfs.img"
 
     def run(self):
         try:
             self.create_partition_table(self.usb_device)
+            self.copy_files_to_usb()
             self.finished.emit(True, "Write complete.")  # Emit completion signal
         except Exception as e:
             self.finished.emit(False, str(e))  # Emit error message
@@ -52,14 +54,26 @@ class WinWriterThread(QThread):
             subprocess.run(
                 ["mkfs.ntfs", "-f", partition], check=True, stdout=subprocess.DEVNULL
             )
-            logging.info(f"Partition table created and formatted on {partition}")
+            logging.info(f"Partition {partition} formatted as NTFS")
 
             # Format the partition as FAT32 (assuming it's /dev/sda2)
             partition = f"{device}2"
             subprocess.run(
                 ["mkfs.vfat", "-F32", partition], check=True, stdout=subprocess.DEVNULL
             )
-            logging.info(f"Partition table created and formatted on {partition}")
+            logging.info(f"Partition {partition} formatted as FAT32")
 
         except subprocess.CalledProcessError as e:
+            logging.error(f"Error: {e}")
+
+    def copy_files_to_usb(self):
+        """Copies the files from the ISO to the USB device & writes the UEFI NTFS image to 2nd partition."""
+
+        try:
+            partition = f"{self.usb_device}2"
+            with open(partition, "wb") as device:
+                with open(self.uefi_ntfs_img_path, "rb") as img:
+                    device.write(img.read())
+            logging.info(f"UEFI NTFS image written to {partition}")
+        except Exception as e:
             logging.error(f"Error: {e}")
