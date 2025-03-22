@@ -1,6 +1,7 @@
 from PySide6.QtCore import QThread, Signal
 import logging
 import subprocess
+from importlib.resources import files
 import re
 
 class WinWriterThread(QThread):
@@ -11,7 +12,7 @@ class WinWriterThread(QThread):
         super().__init__()
         self.iso_path = iso_path
         self.usb_device = usb_device
-        self.uefi_ntfs_img_path = "uefi-ntfs.img"
+        self.uefi_ntfs_img_path = files('isoigniter').joinpath("resources/uefi-ntfs.img")
 
     def run(self):
         try:

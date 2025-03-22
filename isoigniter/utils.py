@@ -13,3 +13,4 @@ def has_mbr_signature(iso_path):
     with open(iso_path, "rb") as f:
         mbr = f.read(512)  # Read first 512 bytes (MBR sector)
     return mbr[510:512] == b"\x55\xaa"  # Check boot signature
+
